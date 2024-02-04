@@ -9,7 +9,8 @@ Bash script to organize your photo/video memories by year/month. It does this by
 
 # Prerequisites
 Have these programs installed:
-* exiftool
+* `exiftool`
+* `md5sum`
 
 # Usage
 `./organize-files.sh <old_and_disorganized_folder> <new_and_organized_folder>` 
