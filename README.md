@@ -10,4 +10,4 @@ Have these programs installed:
 * exiftool
 
 # Usage
-`./organize-files.sh <disorganized_folder> <new_and_organized_folder>` 
+`./organize-files.sh <old_and_disorganized_folder> <new_and_organized_folder>` 
