@@ -35,15 +35,17 @@ find "$SOURCE_DIR" -type f -exec bash -c '
     other_folder_path="$3"
     unknown_folder_path="$4"
     declare -A month_names=([01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December")
-    
+
+    # Extract the file extension early to ensure its available for naming
+    extension="${file##*.}"
+
     # Attempt to extract the creation date with exiftool
     creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-    # Check for valid year (greater than 1900)
     year=$(echo "$creationDate" | cut -d"-" -f1)
-    
+
     if [ -z "$creationDate" ] || [[ "$year" -le 1900 ]]; then
-        echo "Valid creation date not found for $file, moving to Unknown."
+        echo "Valid creation date not found for \"$file\", moving to Unknown."
         cp -f "$file" "$unknown_folder_path/$(basename "$file")"
     else
         month=$(echo "$creationDate" | cut -d"-" -f2)
@@ -53,24 +55,25 @@ find "$SOURCE_DIR" -type f -exec bash -c '
         destinationPath="$target_dir/$year/${month}-${month_name}"
         mkdir -p "$destinationPath"
 
-        newFilename="${year}-${month}-${day}_${time}.${extension,,}"
+        # Correctly append the extension to the new filename
+        newFilename="${year}-${month}-${day}_${time}.${extension}"
         counter=1
         originalHash=$(md5sum "$file" | cut -d " " -f1)
-        
+
         while [ -f "$destinationPath/$newFilename" ]; do
             newFileHash=$(md5sum "$destinationPath/$newFilename" | cut -d " " -f1)
             if [[ "$originalHash" == "$newFileHash" ]]; then
-                echo "Duplicate file detected, skipping copy for $file"
+                echo "Duplicate file detected, skipping copy for \"$file\""
                 break
             else
-                newFilename="${year}-${month}-${day}_${time}_${counter}.${extension,,}"
+                newFilename="${year}-${month}-${day}_${time}_${counter}.${extension}"
                 ((counter++))
             fi
         done
 
         if [[ "$originalHash" != "$newFileHash" ]]; then
             cp -f "$file" "$destinationPath/$newFilename"
-            echo "Copied and renamed $file to $destinationPath/$newFilename"
+            echo "Copied and renamed \"$file\" to \"$destinationPath/$newFilename\""
         fi
     fi
     shopt -u nocasematch
