@@ -31,42 +31,43 @@ find "$SOURCE_DIR" -type f -exec bash -c '
     file="$1"
     target_dir="$2"
     other_folder_path="$3"
-    declare -A month_names=( [01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December" )
+    declare -A month_names=([01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December")
 
     # Use exiftool to extract the creation date
     creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-    # Use files last modification date if creation date is not found
     if [ -z "$creationDate" ]; then
         echo "Creation date not found for $file, using modification date."
         creationDate=$(date -r "$file" "+%Y-%m-%d_%H-%M-%S")
     fi
 
-    # Determine the file extension
     extension="${file##*.}"
-    filename=$(basename "$file")
-
-    # Extract year, month, and day
     year=$(echo "$creationDate" | cut -d"-" -f1)
     month=$(echo "$creationDate" | cut -d"-" -f2)
     day=$(echo "$creationDate" | cut -d"-" -f3 | cut -d"_" -f1)
-
-    # Convert month number to month name
+    time=$(echo "$creationDate" | cut -d"_" -f2)
     month_name="${month_names[$month]}"
+    destinationPath="$target_dir/$year/${month}-${month_name}"
+    mkdir -p "$destinationPath"
 
-    if [[ "$filename" =~ \.(jpg|jpeg|png|gif|bmp|tif|tiff|heic|mp4|mov|avi|wmv|flv|mkv)$ ]]; then
-        # Create directory structure based on year and full month name in the target directory
-        destinationPath="$target_dir/$year/$month_name"
-        mkdir -p "$destinationPath"
+    newFilename="${year}-${month}-${day}_${time}.${extension,,}"
+    counter=1
+    originalHash=$(md5sum "$file" | cut -d " " -f1)
 
-        # Rename and copy the file to the new directory
-        newFilename="${year}-${month_name}-${day}_${creationDate##*_}.${extension,,}"
+    while [ -f "$destinationPath/$newFilename" ]; do
+        newFileHash=$(md5sum "$destinationPath/$newFilename" | cut -d " " -f1)
+        if [[ "$originalHash" == "$newFileHash" ]]; then
+            echo "Duplicate file detected, skipping copy for $file"
+            break
+        else
+            newFilename="${year}-${month}-${day}_${time}_${counter}.${extension,,}"
+            ((counter++))
+        fi
+    done
+
+    if [[ "$originalHash" != "$newFileHash" ]]; then
         cp -f "$file" "$destinationPath/$newFilename"
         echo "Copied and renamed $file to $destinationPath/$newFilename"
-    else
-        # Copy non-photo/video files to the Other folder in the target directory
-        cp -f "$file" "$other_folder_path/$filename"
-        echo "Copied $file to $other_folder_path/$filename"
     fi
     shopt -u nocasematch
 ' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" \;
