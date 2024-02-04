@@ -1,4 +1,4 @@
-# photo-video-organizer
+# Photo & Video Organizer
 Bash script to organize your photo/video memories by year & month. 
 
 It does this by performing the following steps:
