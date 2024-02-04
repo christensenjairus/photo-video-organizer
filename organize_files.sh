@@ -36,15 +36,16 @@ find "$SOURCE_DIR" -type f -exec bash -c '
     unknown_folder_path="$4"
     declare -A month_names=([01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December")
     
-    # Use exiftool to attempt to extract the creation date
+    # Attempt to extract the creation date with exiftool
     creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-    if [ -z "$creationDate" ]; then
-        echo "Creation date not found for $file, moving to Unknown."
+    # Check for valid year (greater than 1900)
+    year=$(echo "$creationDate" | cut -d"-" -f1)
+    
+    if [ -z "$creationDate" ] || [[ "$year" -le 1900 ]]; then
+        echo "Valid creation date not found for $file, moving to Unknown."
         cp -f "$file" "$unknown_folder_path/$(basename "$file")"
     else
-        extension="${file##*.}"
-        year=$(echo "$creationDate" | cut -d"-" -f1)
         month=$(echo "$creationDate" | cut -d"-" -f2)
         day=$(echo "$creationDate" | cut -d"-" -f3 | cut -d"_" -f1)
         time=$(echo "$creationDate" | cut -d"_" -f2)
