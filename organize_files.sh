@@ -18,11 +18,11 @@ fi
 # Ensure the target directory exists, or create it
 mkdir -p "$TARGET_DIR"
 
-# Define the 'Other' and 'Unknown' folder paths in the target directory
+# Define the 'Other' and 'Unknown Date' folder paths in the target directory
 OTHER_FOLDER_PATH="${TARGET_DIR}/Other"
-UNKNOWN_FOLDER_PATH="${TARGET_DIR}/Unknown"
+UNKNOWN_DATE_FOLDER_PATH="${TARGET_DIR}/Unknown Date"
 mkdir -p "$OTHER_FOLDER_PATH"
-mkdir -p "$UNKNOWN_FOLDER_PATH"
+mkdir -p "$UNKNOWN_DATE_FOLDER_PATH"
 
 # Month names array
 declare -A month_names=( [01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December" )
@@ -33,21 +33,20 @@ find "$SOURCE_DIR" -type f -exec bash -c '
     file="$1"
     target_dir="$2"
     other_folder_path="$3"
-    unknown_folder_path="$4"
+    unknown_date_folder_path="$4"
     declare -A month_names=([01]="January" [02]="February" [03]="March" [04]="April" [05]="May" [06]="June" [07]="July" [08]="August" [09]="September" [10]="October" [11]="November" [12]="December")
 
-    # Extract the file extension early to ensure its available for naming
+    # Extract the file extension
     extension="${file##*.}"
 
-    # Attempt to extract the creation date with exiftool
+    # Use exiftool to attempt to extract the creation date
     creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-    year=$(echo "$creationDate" | cut -d"-" -f1)
-
-    if [ -z "$creationDate" ] || [[ "$year" -le 1900 ]]; then
-        echo "Valid creation date not found for \"$file\", moving to Unknown."
-        cp -f "$file" "$unknown_folder_path/$(basename "$file")"
+    if [[ "$creationDate" == "0000:00:00 00:00:00" ]] || [[ -z "$creationDate" ]]; then
+        echo "Valid creation date not found for \"$file\", moving to Unknown Date."
+        cp -f "$file" "$unknown_date_folder_path/$(basename "$file")"
     else
+        year=$(echo "$creationDate" | cut -d"-" -f1)
         month=$(echo "$creationDate" | cut -d"-" -f2)
         day=$(echo "$creationDate" | cut -d"-" -f3 | cut -d"_" -f1)
         time=$(echo "$creationDate" | cut -d"_" -f2)
@@ -55,7 +54,6 @@ find "$SOURCE_DIR" -type f -exec bash -c '
         destinationPath="$target_dir/$year/${month}-${month_name}"
         mkdir -p "$destinationPath"
 
-        # Correctly append the extension to the new filename
         newFilename="${year}-${month}-${day}_${time}.${extension}"
         counter=1
         originalHash=$(md5sum "$file" | cut -d " " -f1)
@@ -77,4 +75,4 @@ find "$SOURCE_DIR" -type f -exec bash -c '
         fi
     fi
     shopt -u nocasematch
-' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" "$UNKNOWN_FOLDER_PATH" \;
+' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" "$UNKNOWN_DATE_FOLDER_PATH" \;
