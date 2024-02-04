@@ -5,8 +5,8 @@ It does this by performing the following steps:
 * Finds when a photo or video was created using the creation date. If no creation date is present, will look at the modification date instead.
 * Renames files to `yyyy-mm-dd_hh-mm-ss`, adding a counter onto the end if many files are taken at the same second *and they are not duplicates*.
 * Removes duplicates.
-* Moves file into a folder representing the year and month. (i.e. `/2022/01-Janurary/`)
-* Moves files that are not photos/videos into their own folder named `Other`, for you to organize manually.
+* Moves file into a folder representing the year and month. (i.e. `/2022/01 - January/`)
+* Moves files that are not photos/videos into their own folder named `Other`, for you to organize manually (or delete!).
 * Moves files with an unknown creation/modification date to a folder named `Unknown Date`, for you to organize manually.
 
 # Prerequisites
@@ -19,8 +19,5 @@ Have these programs installed:
 
 # Results
 
-![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/7fe64d60-0666-4d8e-b1a6-dbb0a7a4ff53)
+![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/5801986f-f9cc-486e-98fd-54e102d79e42)
 
-![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/aa870551-cf97-480d-ac29-1405c914bf20)
-
-![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/8de461c5-d4fb-4e98-a6d3-959173e72020)
