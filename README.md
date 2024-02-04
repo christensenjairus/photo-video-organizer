@@ -9,15 +9,15 @@ It does this by performing the following steps:
 * Moves files that are not photos/videos into their own folder named `Other`, for you to organize manually (or delete!).
 * Moves files with an unknown creation/modification date to a folder named `Unknown Date`, for you to organize manually.
 
-# Prerequisites
+## Prerequisites
 Have these programs installed:
 * `exiftool`
 * `md5sum`
 
-# Usage
+## Usage
 `./organize-files.sh <old_and_disorganized_folder> <new_and_organized_folder>` 
 
-# Results
+## Results
 
 ![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/5801986f-f9cc-486e-98fd-54e102d79e42)
 
