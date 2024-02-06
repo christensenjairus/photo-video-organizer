@@ -56,64 +56,81 @@ find "$SOURCE_DIR" -type f -exec bash -c '
         operation="mv -f" # Change operation to move if --delete option is set
     fi
 
-    # List of possible file extensions for photos or videos in lowercase
-    photo_video_extensions=("jpg" "jpeg" "png" "gif" "bmp" "tif" "tiff" "webp" "heic" "mov" "mp4" "avi" "mkv" "wmv" "flv" "mpeg" "mpg" "3gp" "m4v" "mts" "cr2")
-
-    # Extract the file extension and convert to lowercase
-    extension=$(echo "${file##*.}" | tr "[:upper:]" "[:lower:]")
-
-    # Check if the file extension is in the list of photo/video extensions
-    is_photo_video=false
-    for ext in "${photo_video_extensions[@]}"; do
-        if [[ "$extension" == "$ext" ]]; then
-            is_photo_video=true
-            break
-        fi
-    done
-
-    if [[ "$is_photo_video" == false ]]; then
-        echo "File \"$file\" is not a photo or video, moving to Other."
+    # Move files starting with "._" directly to the Other folder
+    # My syncing client uses these files for sync information
+    if [[ "$(basename "$file")" == ._* ]]; then
+        echo "File \"$file\" starts with ._ , moving to Other."
         $operation "$file" "$other_folder_path/$(basename "$file")"
     else
         # Use exiftool to attempt to extract the creation date
-        creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
+        creationDate=$(exiftool -d "%Y-%m-%d" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-              if [[ "$creationDate" == "0000:00:00 00:00:00" ]] || [[ -z "$creationDate" ]]; then
-            echo "Valid creation date not found for \"$file\", moving to Unknown Date."
-            $operation "$file" "$unknown_date_folder_path/$(basename "$file")"
-        else
-            year=$(echo "$creationDate" | cut -d"-" -f1)
-            month=$(echo "$creationDate" | cut -d"-" -f2 | sed "s/^0*//") # Remove leading zeros
-            day=$(echo "$creationDate" | cut -d"-" -f3 | cut -d"_" -f1)
-            time=$(echo "$creationDate" | cut -d"_" -f2)
-            
-            # Month names
-            month_names=("01 - January" "02 - February" "03 - March" "04 - April" "05 - May" "06 - June" "07 - July" "08 - August" "09 - September" "10 - October" "11 - November" "12 - December")
-            month_name="${month_names[$month - 1]}" # Adjust month value
-            
-            destinationPath="$target_dir/$year/$month_name"
-            mkdir -p "$destinationPath"
+        # # Check if the creation date is February 5th, 2022
+        # if [[ "$creationDate" == "2022-02-05" ]]; then
+        #     echo "Creation date for \"$file\" is February 5th, 2022, moving to Unknown Date."
+        #     $operation "$file" "$unknown_date_folder_path/$(basename "$file")"
+        # else
+            # List of possible file extensions for photos or videos in lowercase
+            photo_video_extensions=("jpg" "jpeg" "png" "gif" "bmp" "tif" "tiff" "webp" "heic" "mov" "mp4" "avi" "mkv" "wmv" "flv" "mpeg" "mpg" "3gp" "m4v" "mts" "cr2")
 
-            newFilename="${year}-${month}-${day}_${time}.${extension}"
-            counter=1
-            originalHash=$(md5sum "$file" | cut -d " " -f1)
+            # Extract the file extension and convert to lowercase
+            extension=$(echo "${file##*.}" | tr "[:upper:]" "[:lower:]")
 
-            while [ -f "$destinationPath/$newFilename" ]; do
-                newFileHash=$(md5sum "$destinationPath/$newFilename" | cut -d " " -f1)
-                if [[ "$originalHash" == "$newFileHash" ]]; then
-                    echo "Duplicate file detected, skipping copy for \"$file\""
+            # Check if the file extension is in the list of photo/video extensions
+            is_photo_video=false
+            for ext in "${photo_video_extensions[@]}"; do
+                if [[ "$extension" == "$ext" ]]; then
+                    is_photo_video=true
                     break
-                else
-                    newFilename="${year}-${month}-${day}_${time}_${counter}.${extension}"
-                    ((counter++))
                 fi
             done
 
-            if [[ "$originalHash" != "$newFileHash" ]]; then
-                $operation "$file" "$destinationPath/$newFilename"
-                echo "Copied and renamed \"$file\" to \"$destinationPath/$newFilename\""
+            if [[ "$is_photo_video" == false ]]; then
+                echo "File \"$file\" is not a photo or video, moving to Other."
+                $operation "$file" "$other_folder_path/$(basename "$file")"
+            else
+                # Use exiftool to attempt to extract the creation date
+                creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
+
+                    if [[ "$creationDate" == "0000:00:00 00:00:00" ]] || [[ -z "$creationDate" ]]; then
+                    echo "Valid creation date not found for \"$file\", moving to Unknown Date."
+                    $operation "$file" "$unknown_date_folder_path/$(basename "$file")"
+                else
+                    year=$(echo "$creationDate" | cut -d"-" -f1)
+                    month=$(echo "$creationDate" | cut -d"-" -f2)
+                    day=$(echo "$creationDate" | cut -d"-" -f3 | cut -d"_" -f1)
+                    time=$(echo "$creationDate" | cut -d"_" -f2)
+
+                    # Month names
+                    month_names=("January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December")
+                    month_decimal=$((10#$month)) # Force base-10 interpretation
+                    month_name="${month_names[month_decimal - 1]}"
+
+                    destinationPath="$target_dir/$year/($year-$month) $month_name $year"
+                    mkdir -p "$destinationPath"
+
+                    newFilename="${year}-${month}-${day}_${time}.${extension}"
+                    counter=1
+                    originalHash=$(md5sum "$file" | cut -d " " -f1)
+
+                    while [ -f "$destinationPath/$newFilename" ]; do
+                        newFileHash=$(md5sum "$destinationPath/$newFilename" | cut -d " " -f1)
+                        if [[ "$originalHash" == "$newFileHash" ]]; then
+                            echo "Duplicate file detected, skipping copy for \"$file\""
+                            break
+                        else
+                            newFilename="${year}-${month}-${day}_${time}_${counter}.${extension}"
+                            ((counter++))
+                        fi
+                    done
+
+                    if [[ "$originalHash" != "$newFileHash" ]]; then
+                        $operation "$file" "$destinationPath/$newFilename"
+                        echo "Copied and renamed \"$file\" to \"$destinationPath/$newFilename\""
+                    fi
+                fi
             fi
-        fi
+        # fi
     fi
     shopt -u nocasematch
 ' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" "$UNKNOWN_DATE_FOLDER_PATH" \;
