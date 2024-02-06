@@ -1,8 +1,17 @@
 #!/bin/bash
 
+# Initialize delete flag
+delete_files=false
+
+# Check for --delete option
+if [[ "$1" == "--delete" ]]; then
+    delete_files=true
+    shift # Remove the --delete argument
+fi
+
 # Check if the correct number of arguments was provided
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <source directory> <target directory>"
+    echo "Usage: $0 [--delete] <source directory> <target directory>"
     exit 1
 fi
 
@@ -12,6 +21,16 @@ TARGET_DIR="$2"
 # Ensure the source directory exists
 if [ ! -d "$SOURCE_DIR" ]; then
     echo "The source directory does not exist. Please provide a valid path."
+    exit 1
+fi
+
+# Convert to absolute paths to avoid misleading comparisons due to relative paths
+ABS_SOURCE_DIR="$(realpath "$SOURCE_DIR")"
+ABS_TARGET_DIR="$(realpath "$TARGET_DIR")"
+
+# Check if source and destination directories are the same
+if [ "$ABS_SOURCE_DIR" == "$ABS_TARGET_DIR" ]; then
+    echo "The source and target directories must be different."
     exit 1
 fi
 
@@ -27,12 +46,18 @@ mkdir -p "$UNKNOWN_DATE_FOLDER_PATH"
 # Process every file in the source directory recursively
 find "$SOURCE_DIR" -type f -exec bash -c '
     shopt -s nocasematch
+    delete_files='"$delete_files"'
     file="$1"
     target_dir="$2"
     other_folder_path="$3"
     unknown_date_folder_path="$4"
+    operation="cp -f" # Default operation is to copy
+    if [[ "$delete_files" == true ]]; then
+        operation="mv -f" # Change operation to move if --delete option is set
+    fi
+
     # List of possible file extensions for photos or videos in lowercase
-    photo_video_extensions=("jpg" "jpeg" "png" "gif" "bmp" "tif" "tiff" "webp" "heic" "mov" "mp4" "avi" "mkv" "wmv" "flv" "mpeg" "mpg" "3gp" "m4v" "mts")
+    photo_video_extensions=("jpg" "jpeg" "png" "gif" "bmp" "tif" "tiff" "webp" "heic" "mov" "mp4" "avi" "mkv" "wmv" "flv" "mpeg" "mpg" "3gp" "m4v" "mts" "cr2")
 
     # Extract the file extension and convert to lowercase
     extension=$(echo "${file##*.}" | tr "[:upper:]" "[:lower:]")
@@ -48,14 +73,14 @@ find "$SOURCE_DIR" -type f -exec bash -c '
 
     if [[ "$is_photo_video" == false ]]; then
         echo "File \"$file\" is not a photo or video, moving to Other."
-        cp -f "$file" "$other_folder_path/$(basename "$file")"
+        $operation "$file" "$other_folder_path/$(basename "$file")"
     else
         # Use exiftool to attempt to extract the creation date
         creationDate=$(exiftool -d "%Y-%m-%d_%H-%M-%S" -DateTimeOriginal -CreateDate -ModifyDate -FileModifyDate -ExtractEmbedded "$file" | awk -F": " "{ print \$2 }" | head -n 1)
 
-        if [[ "$creationDate" == "0000:00:00 00:00:00" ]] || [[ -z "$creationDate" ]]; then
+              if [[ "$creationDate" == "0000:00:00 00:00:00" ]] || [[ -z "$creationDate" ]]; then
             echo "Valid creation date not found for \"$file\", moving to Unknown Date."
-            cp -f "$file" "$unknown_date_folder_path/$(basename "$file")"
+            $operation "$file" "$unknown_date_folder_path/$(basename "$file")"
         else
             year=$(echo "$creationDate" | cut -d"-" -f1)
             month=$(echo "$creationDate" | cut -d"-" -f2 | sed "s/^0*//") # Remove leading zeros
@@ -85,10 +110,16 @@ find "$SOURCE_DIR" -type f -exec bash -c '
             done
 
             if [[ "$originalHash" != "$newFileHash" ]]; then
-                cp -f "$file" "$destinationPath/$newFilename"
+                $operation "$file" "$destinationPath/$newFilename"
                 echo "Copied and renamed \"$file\" to \"$destinationPath/$newFilename\""
             fi
         fi
     fi
     shopt -u nocasematch
 ' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" "$UNKNOWN_DATE_FOLDER_PATH" \;
+
+
+# Delete empty directories in source and target directories
+find "$SOURCE_DIR" "$TARGET_DIR" -type d -empty -delete
+
+echo "Operation completed. Empty directories have been cleaned up."
