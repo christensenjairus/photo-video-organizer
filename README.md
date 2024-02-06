@@ -14,18 +14,19 @@ Have these programs installed:
 * `exiftool`
 * `md5sum`
 
-## Organize-Files Usage
+## Usage
 `./organize-files.sh [--delete] <old_and_disorganized_folder> <new_and_organized_folder>`
 
-## Identify Duplicates Usage
-This is a script that you can run after you've organized your photos to ensure there are no duplicates. This script can optionally delete one of the duplicates. It prefers to keep the well-named one and/or the non-HEIC one.
-
-`./identify-duplicates.sh [--delete] <folder>`
-
-#### Delete Mode
+### Delete Mode
 ***TAKE A BACKUP BEFORE USING***
 
 This mode, triggered by the `--delete` flag will move the files instead of copy them, then delete leftover duplicates from the source directory.
+
+### Identify Duplicates Usage
+*You probably won't need this script. I created this only because I had many HEIC files and JPEG files with the same content and needed to find & delete the HIEC ones.*
+This is an extra script that you can run after you've organized your photos to ensure there are no duplicates. This script can optionally delete one of the duplicates with the `--delete` flag. The script prefers to keep the well-named one and/or the non-HEIC one.
+
+`./identify-duplicates.sh [--delete] <folder>`
 
 ## Results
 
