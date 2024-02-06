@@ -19,6 +19,7 @@ Have these programs installed:
 
 ## Identify Duplicates Usage
 This is a script that you can run after you've organized your photos to ensure there are no duplicates. This script can optionally delete one of the duplicates. It prefers to keep the well-named one and/or the non-HEIC one.
+
 `./identify-duplicates.sh [--delete] <folder>`
 
 #### Delete Mode
