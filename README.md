@@ -14,8 +14,12 @@ Have these programs installed:
 * `exiftool`
 * `md5sum`
 
-## Usage
-`./organize-files.sh [--delete] <old_and_disorganized_folder> <new_and_organized_folder>` 
+## Organize-Files Usage
+`./organize-files.sh [--delete] <old_and_disorganized_folder> <new_and_organized_folder>`
+
+## Identify Duplicates Usage
+This is a script that you can run after you've organized your photos to ensure there are no duplicates. This script can optionally delete one of the duplicates. It prefers to keep the well-named one and/or the non-HEIC one.
+`./identify-duplicates.sh [--delete] <folder>`
 
 #### Delete Mode
 ***TAKE A BACKUP BEFORE USING***
@@ -24,5 +28,4 @@ This mode, triggered by the `--delete` flag will move the files instead of copy 
 
 ## Results
 
-![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/5801986f-f9cc-486e-98fd-54e102d79e42)
-
+![image](https://github.com/christensenjairus/photo-video-organizer/assets/58751387/199fdc0a-d941-46d6-bc25-6c7966a7cecc)
