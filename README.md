@@ -3,11 +3,13 @@ Bash script to organize your photo/video memories by year & month.
 
 It does this by performing the following steps:
 * Finds when a photo or video was created using the creation date. If no creation date is present, will look at the modification date instead.
-* Renames files to `yyyy-mm-dd_hh-mm-ss`, adding a counter onto the end if many files were created at the same second *and they are not duplicates*.
-* Removes duplicates.
-* Moves file into a folder representing the year and month. (i.e. `/2022/(2022-01) January 2022/`)
-* Moves files that are not photos/videos into their own folder named `Other`, for you to organize manually (or delete!).
-* Moves files with an unknown creation/modification date to a folder named `Unknown Date`, for you to organize manually.
+* Copies file into a folder representing the year and month. (i.e. `/2022/(2022-01) January 2022/`)
+* Copies files that are not photos/videos into their own folder named `Other`, for you to organize manually (or delete!).
+* Copies files with an unknown creation/modification date to a folder named `Unknown Date`, for you to organize manually.
+* Names copied files to `yyyy-mm-dd_hh-mm-ss`, adding a counter onto the end if many files were created at the same second *and they are not duplicates*.
+* Does not copy over duplicates.
+* Optionally, has a `--delete` flag to move instead of copy.
+* Cleans up empty folders.
 
 ## Prerequisites
 Have these programs installed:
