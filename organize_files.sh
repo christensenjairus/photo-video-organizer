@@ -136,6 +136,9 @@ find "$SOURCE_DIR" -type f -exec bash -c '
 ' bash {} "$TARGET_DIR" "$OTHER_FOLDER_PATH" "$UNKNOWN_DATE_FOLDER_PATH" \;
 
 
+# Delete hidden files created by this script
+find $TARGET_DIR -type f -name '._*' -exec rm -f {} +
+
 # Delete empty directories in source and target directories
 find "$SOURCE_DIR" "$TARGET_DIR" -type d -empty -delete
 
